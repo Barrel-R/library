@@ -10,6 +10,12 @@ class Book extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'name',
+        'isbn',
+        'value',
+    ];
+
     public function stores(): BelongsToMany
     {
         return $this->belongsToMany(Store::class);

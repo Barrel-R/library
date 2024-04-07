@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BookStoreRequest;
 use App\Http\Requests\BookUpdateRequest;
 use App\Models\Book;
+use App\Services\BookService;
+use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
@@ -13,15 +15,16 @@ class BookController extends Controller
      */
     public function index()
     {
-        return view('books.index');
+        $books = Book::all(); // if dataset gets large, paginate(50)
+        return response()->json($books);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display the specified resource.
      */
-    public function create()
+    public function show(int $id)
     {
-        return view('books.create');
+        return response()->json(Book::find($id));
     }
 
     /**
@@ -30,32 +33,16 @@ class BookController extends Controller
     public function store(BookStoreRequest $request)
     {
         $book = Book::create($request->validated());
-        return redirect()->route('books.show', ['id' => $book->id]);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        return view('books.show', ['id' => $id]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        return view('books.edit', ['id' => $id]);
+        return response()->json($book, 201);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(BookUpdateRequest $request, string $id)
+    public function update(BookUpdateRequest $request, string $id, BookService $service)
     {
-        Book::find($id)->update($request->validated());
-        redirect()->route('books.show', ['id' => $id]);
+        $book = $service->updateBook($request, $id);
+        return response()->json($book);
     }
 
     /**
@@ -63,7 +50,16 @@ class BookController extends Controller
      */
     public function destroy(string $id)
     {
+        if (!Book::where('id', $id)->exists()) return response()->json(['error' => 'There is no Book with id ' . $id . ' in our records.'], 400);
         Book::destroy($id);
-        redirect()->route('books.index');
+        return response()->json(['message' => 'Book deleted successfully.'], 200);
+    }
+
+    public function attachStores(Request $request, int $id)
+    {
+        $book = Book::find($id);
+        $request->validate(['stores.*' => 'exists:stores,id']);
+        $book->stores()->attach($request->stores);
+        return response()->json($book);
     }
 }

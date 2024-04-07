@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
-class BookUpdateRequest extends FormRequest
+class StoreCreationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,9 +25,9 @@ class BookUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string',
-            'isbn' => 'sometimes|numeric',
-            'value' => 'sometimes|decimal:2',
+            'name' => 'required|string',
+            'address' => 'required|string',
+            'active' => 'required|boolean',
         ];
     }
 

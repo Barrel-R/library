@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreStoreRequest;
+use App\Http\Requests\StoreCreationRequest;
 use App\Http\Requests\StoreUpdateRequest;
 use App\Models\Store;
+use App\Services\StoreService;
+use Illuminate\Http\Request;
 
 class StoreController extends Controller
 {
@@ -13,49 +15,34 @@ class StoreController extends Controller
      */
     public function index()
     {
-        return view('stores.index');
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return view('stores.create');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreStoreRequest $request)
-    {
-        $store = Store::create($request->validated());
-        return view('book.show', ['id' => $store->id]);
+        $stores = Store::all(); // if dataset gets large, paginate(50)
+        return response()->json($stores);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(int $id)
     {
-        return view('stores.show', ['id' => $id]);
+        return response()->json(Store::find($id));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Store a newly created resource in storage.
      */
-    public function edit(string $id)
+    public function store(StoreCreationRequest $request)
     {
-        return view('stores.edit', ['id' => $id]);
+        $store = Store::create($request->validated());
+        return response()->json($store, 201);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(StoreUpdateRequest $request, string $id)
+    public function update(StoreUpdateRequest $request, string $id, StoreService $service)
     {
-        Store::find($id)->update($request->validated());
-        return view('stores.show', ['id' => $id]);
+        $store = $service->updateStore($request, $id);
+        return response()->json($store);
     }
 
     /**
@@ -63,7 +50,16 @@ class StoreController extends Controller
      */
     public function destroy(string $id)
     {
+        if (!Store::where('id', $id)->exists()) return response()->json(['error' => 'There is no Store with id ' . $id . ' in our records.'], 400);
         Store::destroy($id);
-        return view('stores.index');
+        return response()->json(['message' => 'Store deleted successfully.'], 200);
+    }
+
+    public function attachBooks(Request $request, int $id)
+    {
+        $store = Store::find($id);
+        $request->validate(['books.*' => 'exists:books,id']);
+        $store->books()->attach($request->id);
+        return response()->json($store);
     }
 }

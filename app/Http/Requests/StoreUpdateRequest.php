@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class StoreUpdateRequest extends FormRequest
 {
@@ -11,7 +14,7 @@ class StoreUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +25,15 @@ class StoreUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'sometimes|string',
+            'address' => 'sometimes|string',
+            'active' => 'sometimes|boolean',
         ];
+    }
+
+    public function failedValidation(Validator $validator): ValidationException
+    {
+        $response = new Response(['errors' => $validator->errors()], 422);
+        throw new ValidationException($validator, $response);
     }
 }
